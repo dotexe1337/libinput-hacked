@@ -1,3 +1,7 @@
+HACKED VERSION BY .exe
+=======
+this version of libinput was hacked to remove the thinkpad trackpoint palm rejection, so i can scroll with the touchpad while moving the trackpoint.
+
 libinput
 ========
 
