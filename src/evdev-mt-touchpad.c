@@ -922,28 +922,6 @@ tp_palm_detect_trackpoint_triggered(struct tp_dispatch *tp,
 				    struct tp_touch *t,
 				    uint64_t time)
 {
-	if (!tp->palm.monitor_trackpoint)
-		return false;
-
-	if (t->palm.state == PALM_NONE &&
-	    t->state == TOUCH_BEGIN &&
-	    tp->palm.trackpoint_active) {
-		t->palm.state = PALM_TRACKPOINT;
-		return true;
-	}
-
-	if (t->palm.state == PALM_TRACKPOINT &&
-		   t->state == TOUCH_UPDATE &&
-		   !tp->palm.trackpoint_active) {
-
-		if (t->palm.time == 0 ||
-		    t->palm.time > tp->palm.trackpoint_last_event_time) {
-			t->palm.state = PALM_NONE;
-			evdev_log_debug(tp->device,
-				       "palm: touch %d released, timeout after trackpoint\n", t->index);
-		}
-	}
-
 	return false;
 }
 
@@ -1139,9 +1117,6 @@ tp_palm_detect(struct tp_dispatch *tp, struct tp_touch *t, uint64_t time)
 		goto out;
 
 	if (tp_palm_detect_dwt_triggered(tp, t, time))
-		goto out;
-
-	if (tp_palm_detect_trackpoint_triggered(tp, t, time))
 		goto out;
 
 	if (tp_palm_detect_tool_triggered(tp, t, time))
@@ -1863,12 +1838,6 @@ tp_post_events(struct tp_dispatch *tp, uint64_t time)
 	ignore_motion |= tp_tap_handle_state(tp, time);
 	ignore_motion |= tp_post_button_events(tp, time);
 
-	if (tp->palm.trackpoint_active || tp->dwt.keyboard_active) {
-		tp_edge_scroll_stop_events(tp, time);
-		tp_gesture_cancel(tp, time);
-		return;
-	}
-
 	if (ignore_motion) {
 		tp_edge_scroll_stop_events(tp, time);
 		tp_gesture_cancel_motion_gestures(tp, time);
@@ -2185,13 +2154,6 @@ tp_resume(struct tp_dispatch *tp,
 static void
 tp_trackpoint_timeout(uint64_t now, void *data)
 {
-	struct tp_dispatch *tp = data;
-
-	if (tp->palm.trackpoint_active) {
-		tp_tap_resume(tp, now);
-		tp->palm.trackpoint_active = false;
-	}
-	tp->palm.trackpoint_event_count = 0;
 }
 
 static void
