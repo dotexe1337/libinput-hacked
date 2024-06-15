@@ -1150,9 +1150,6 @@ out:
 	case PALM_TYPING:
 		palm_state = "typing";
 		break;
-	case PALM_TRACKPOINT:
-		palm_state = "trackpoint";
-		break;
 	case PALM_TOOL_PALM:
 		palm_state = "tool-palm";
 		break;
@@ -1944,11 +1941,6 @@ tp_remove_sendevents(struct tp_dispatch *tp)
 	libinput_timer_cancel(&tp->palm.trackpoint_timer);
 	libinput_timer_cancel(&tp->dwt.keyboard_timer);
 
-	if (tp->buttons.trackpoint &&
-	    tp->palm.monitor_trackpoint)
-		libinput_device_remove_event_listener(
-					&tp->palm.trackpoint_listener);
-
 	list_for_each(kbd, &tp->dwt.paired_keyboard_list, link) {
 		libinput_device_remove_event_listener(&kbd->listener);
 	}
@@ -2177,11 +2169,6 @@ tp_trackpoint_event(uint64_t time, struct libinput_event *event, void *data)
 		libinput_timer_set(&tp->palm.trackpoint_timer,
 				   time + DEFAULT_TRACKPOINT_EVENT_TIMEOUT);
 		return;
-	}
-
-	if (!tp->palm.trackpoint_active) {
-		tp_stop_actions(tp, time);
-		tp->palm.trackpoint_active = true;
 	}
 
 	libinput_timer_set(&tp->palm.trackpoint_timer,
